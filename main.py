@@ -5,6 +5,9 @@ import pandas as pd
 import os
 from typing import Optional
 
+import stats
+
+
 TRANSCRIPT_PATH = 'transcript.json'
 PARTICIPANTS_DF_PATH = 'participants.pkl'
 WEB3_PROVIDER = 'https://rpc.ankr.com/eth'
@@ -86,6 +89,7 @@ def update_missing_nonce(w3: web3.Web3, participants_df: pd.DataFrame, save_path
 def patch_missing_df_data(w3: web3.Web3,participants_df: pd.DataFrame, save_path: str, save_int: int=256, block: str='0xED14F1') -> pd.DataFrame:
     participants_df = update_missing_balance(w3, participants_df, save_path, save_int, block)
     participants_df = update_missing_nonce(w3, participants_df, save_path, save_int, block)
+    return participants_df
 
 
 if __name__ == '__main__':
@@ -104,3 +108,5 @@ if __name__ == '__main__':
     participants_df.to_pickle(PARTICIPANTS_DF_PATH)
 
     patch_missing_df_data(w3, participants_df, PARTICIPANTS_DF_PATH)
+
+    stats.plot_cumulative_field(participants_df, 'nonce')
