@@ -1,4 +1,3 @@
-from ens import ENS
 import click
 import json
 from tqdm import tqdm
@@ -7,6 +6,8 @@ import pandas as pd
 import os
 import requests
 from typing import Optional
+
+from process_ens import update_missing_ens
 
 TRANSCRIPT_URL = 'https://seq.ceremony.ethereum.org/info/current_state'
 
@@ -89,23 +90,6 @@ def update_missing_nonce(w3: web3.Web3, participants_df: pd.DataFrame, save_path
     for i, row in tqdm(missing_data_df.iterrows(), total=missing_data_df.shape[0]):
         address = row['address']
         participants_df.loc[i, 'nonce'] = w3.eth.get_transaction_count(address, block)
-        if i % save_int == 0:
-            participants_df.to_pickle(save_path)
-            participants_df.head()
-    participants_df.to_pickle(save_path)
-    return participants_df
-
-
-def update_missing_ens(w3: web3.Web3, participants_df: pd.DataFrame, save_path: str, save_int: int, block: str) -> pd.DataFrame:
-    if 'ens' not in participants_df:
-        participants_df['ens'] = None
-    missing_data_df = participants_df[participants_df['ens'].isna()]
-    missing_data_df = missing_data_df[missing_data_df['address'].notna()]
-    print('Patching the {:} missing ENS names'.format(missing_data_df.shape[0]))
-    ns = ENS.fromWeb3(w3)
-    for i, row in tqdm(missing_data_df.iterrows(), total=missing_data_df.shape[0]):
-        address = row['address']
-        participants_df.loc[i, 'ens'] = ns.name(address)
         if i % save_int == 0:
             participants_df.to_pickle(save_path)
             participants_df.head()
