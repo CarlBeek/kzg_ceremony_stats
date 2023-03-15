@@ -71,8 +71,9 @@ def update_missing_balance(w3: web3.Web3, participants_df: pd.DataFrame, save_pa
         participants_df['balance'] = None
     missing_data_df = participants_df[participants_df['balance'].isna()]
     missing_data_df = missing_data_df[missing_data_df['address'].notna()]
-    print('Patching the {:} missing balances'.format(missing_data_df.shape[0]))
-    for i, row in tqdm(missing_data_df.iterrows(), total=missing_data_df.shape[0]):
+    num_missing = missing_data_df.shape[0]
+    print(f'{num_missing} balances missing')
+    for i, row in tqdm(missing_data_df.iterrows(), total=num_missing):
         address = row['address']
         participants_df.loc[i, 'balance'] = w3.eth.get_balance(address, block)
         if i % save_int == 0:
@@ -86,8 +87,9 @@ def update_missing_nonce(w3: web3.Web3, participants_df: pd.DataFrame, save_path
         participants_df['nonce'] = None
     missing_data_df = participants_df[participants_df['nonce'].isna()]
     missing_data_df = missing_data_df[missing_data_df['address'].notna()]
-    print('Patching the {:} missing nonces'.format(missing_data_df.shape[0]))
-    for i, row in tqdm(missing_data_df.iterrows(), total=missing_data_df.shape[0]):
+    num_missing = missing_data_df.shape[0]
+    print(f'{num_missing} nonces missing')
+    for i, row in tqdm(missing_data_df.iterrows(), total=num_missing):
         address = row['address']
         participants_df.loc[i, 'nonce'] = w3.eth.get_transaction_count(address, block)
         if i % save_int == 0:
@@ -97,7 +99,7 @@ def update_missing_nonce(w3: web3.Web3, participants_df: pd.DataFrame, save_path
     return participants_df
 
 
-def patch_missing_df_data(w3: web3.Web3,participants_df: pd.DataFrame, save_path: str, save_int: int=256, block: str='0xED14F1') -> pd.DataFrame:
+def patch_missing_df_data(w3: web3.Web3,participants_df: pd.DataFrame, save_path: str, save_int: int=128, block: str='0xED14F1') -> pd.DataFrame:
     participants_df = update_missing_balance(w3, participants_df, save_path, save_int, block)
     participants_df = update_missing_nonce(w3, participants_df, save_path, save_int, block)
     participants_df = update_missing_ens(w3, participants_df, save_path, save_int, block)

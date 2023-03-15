@@ -35,8 +35,9 @@ def update_missing_ens(w3: web3.Web3, participants_df: pd.DataFrame, save_path: 
         participants_df['ens'] = None
     missing_data_df = participants_df[participants_df['ens'].isna()]
     missing_data_df = missing_data_df[missing_data_df['address'].notna()]
-    print('Patching the {:} missing ENS names'.format(missing_data_df.shape[0]))
-    for i, row in tqdm(missing_data_df.iterrows(), total=missing_data_df.shape[0]):
+    num_missing = missing_data_df.shape[0]
+    print(f'{num_missing} ENS names missing')
+    for i, row in tqdm(missing_data_df.iterrows(), total=num_missing):
         address = row['address']
         participants_df.loc[i, 'ens'] = reverse_ens_lookup(w3, address, int(block, 16))
         if i % save_int == 0:
