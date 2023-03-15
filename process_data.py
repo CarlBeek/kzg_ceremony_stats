@@ -9,7 +9,9 @@ from typing import Optional
 
 from process_ens import update_missing_ens
 
+G2 = '0x93e02b6052719f607dacd3a088274f65596bd0d09920b61ab5da61bbdc7f5049334cf11213945d57e5ac7d055d042b7e024aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b647ae3d1770bac0326a805bbefd48056c8c121bdb8'
 TRANSCRIPT_URL = 'https://seq.ceremony.ethereum.org/info/current_state'
+CUT_OFF_BLOCK = 16394156
 
 
 def download_new_transcript(transcript_path: str) -> None:
@@ -61,12 +63,23 @@ def insert_new_participants(w3: web3.Web3, participants_df: pd.DataFrame, transc
 
 
 def update_missing_bot_info(participants_df: pd.DataFrame) -> pd.DataFrame:
-    # Detect "Ones" bots
-    participants_df['bots'] = participants_df['pot_pk12'] == '0x93e02b6052719f607dacd3a088274f65596bd0d09920b61ab5da61bbdc7f5049334cf11213945d57e5ac7d055d042b7e024aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b647ae3d1770bac0326a805bbefd48056c8c121bdb8'
+    def catagorise_bot(row) -> str:
+        # Mark "Ones" bots
+        if row['pot_pk12'] == G2:
+            return 'one'
+        # Mark unsigned BLS contributions
+        elif row['bls_sig12'] == '':
+            return 'no bls sig'
+        # Mark unsigned ECDSA contributions
+        elif row['ecdsa_sig'] == '' and row['address'] != '':
+            return 'no ecdsa sig'
+        return ''
+    participants_df['bots'] = participants_df.apply(catagorise_bot, axis=1)
     return participants_df
 
 
-def update_missing_balance(w3: web3.Web3, participants_df: pd.DataFrame, save_path: str, save_int: int, block: str) -> pd.DataFrame:
+
+def update_missing_balance(w3: web3.Web3, participants_df: pd.DataFrame, save_path: str, save_int: int, block: int) -> pd.DataFrame:
     if 'balance' not in participants_df:
         participants_df['balance'] = None
     missing_data_df = participants_df[participants_df['balance'].isna()]
@@ -82,7 +95,7 @@ def update_missing_balance(w3: web3.Web3, participants_df: pd.DataFrame, save_pa
     return participants_df
 
 
-def update_missing_nonce(w3: web3.Web3, participants_df: pd.DataFrame, save_path: str, save_int: int, block: str) -> pd.DataFrame:
+def update_missing_nonce(w3: web3.Web3, participants_df: pd.DataFrame, save_path: str, save_int: int, block: int) -> pd.DataFrame:
     if 'nonce' not in participants_df:
         participants_df['nonce'] = None
     missing_data_df = participants_df[participants_df['nonce'].isna()]
@@ -99,7 +112,7 @@ def update_missing_nonce(w3: web3.Web3, participants_df: pd.DataFrame, save_path
     return participants_df
 
 
-def patch_missing_df_data(w3: web3.Web3,participants_df: pd.DataFrame, save_path: str, save_int: int=128, block: str='0xED14F1') -> pd.DataFrame:
+def patch_missing_df_data(w3: web3.Web3,participants_df: pd.DataFrame, save_path: str, save_int: int=128, block: int=CUT_OFF_BLOCK) -> pd.DataFrame:
     participants_df = update_missing_balance(w3, participants_df, save_path, save_int, block)
     participants_df = update_missing_nonce(w3, participants_df, save_path, save_int, block)
     participants_df = update_missing_ens(w3, participants_df, save_path, save_int, block)
