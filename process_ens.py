@@ -30,7 +30,7 @@ def reverse_ens_lookup(w3: web3.Web3, address: str, block_number: int) -> str:
         ens_name = resolver_contract.functions.name(ens_name_hash).call(block_identifier=block_number)
     return ens_name
 
-def update_missing_ens(w3: web3.Web3, participants_df: pd.DataFrame, save_path: str, save_int: int, block: str) -> pd.DataFrame:
+def update_missing_ens(w3: web3.Web3, participants_df: pd.DataFrame, save_path: str, save_int: int, block: int) -> pd.DataFrame:
     if 'ens' not in participants_df:
         participants_df['ens'] = None
     missing_data_df = participants_df[participants_df['ens'].isna()]
@@ -39,7 +39,7 @@ def update_missing_ens(w3: web3.Web3, participants_df: pd.DataFrame, save_path: 
     print(f'{num_missing} ENS names missing')
     for i, row in tqdm(missing_data_df.iterrows(), total=num_missing):
         address = row['address']
-        participants_df.loc[i, 'ens'] = reverse_ens_lookup(w3, address, int(block, 16))
+        participants_df.loc[i, 'ens'] = reverse_ens_lookup(w3, address, block)
         if i % save_int == 0:
             participants_df.to_pickle(save_path)
             participants_df.head()
