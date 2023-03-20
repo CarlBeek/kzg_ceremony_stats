@@ -1,4 +1,5 @@
 venv
 transcript.json
-participants.pkl
-participants_bad_block_num_15537393.pkl
+*.csv
+*.pkl
+plots
