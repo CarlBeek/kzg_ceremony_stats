@@ -9,7 +9,6 @@ from typing import Optional
 
 from process_ens import update_missing_ens
 
-G2 = '0x93e02b6052719f607dacd3a088274f65596bd0d09920b61ab5da61bbdc7f5049334cf11213945d57e5ac7d055d042b7e024aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b647ae3d1770bac0326a805bbefd48056c8c121bdb8'
 TRANSCRIPT_URL = 'https://seq.ceremony.ethereum.org/info/current_state'
 CUT_OFF_BLOCK = 16394156
 
@@ -61,23 +60,6 @@ def insert_new_participants(w3: web3.Web3, participants_df: pd.DataFrame, transc
 
     participants_df['address'] = participants_df['participantId'].apply(lambda pid: maybe_get_address(w3, pid))
     return participants_df
-
-
-def update_missing_bot_info(participants_df: pd.DataFrame) -> pd.DataFrame:
-    def catagorise_bot(row) -> str:
-        # Mark "Ones" bots
-        if row['pot_pk12'] == G2:
-            return 'one'
-        # Mark unsigned BLS contributions
-        elif row['bls_sig12'] == '':
-            return 'no bls sig'
-        # Mark unsigned ECDSA contributions
-        elif row['ecdsa_sig'] == '' and row['address'] != '':
-            return 'no ecdsa sig'
-        return ''
-    participants_df['bots'] = participants_df.apply(catagorise_bot, axis=1)
-    return participants_df
-
 
 
 def update_missing_balance(w3: web3.Web3, participants_df: pd.DataFrame, save_path: str, save_int: int, block: int) -> pd.DataFrame:
@@ -153,9 +135,7 @@ def load_new_data(
 
     participants_df = insert_new_participants(w3, participants_df, transcript_df)
 
-    participants_df = update_missing_bot_info(participants_df)
-
     if patch_missing_data:
         participants_df = patch_missing_df_data(w3, participants_df, participants_path)
-    
+    participants_df.drop('bots', axis=1)
     participants_df.to_pickle(participants_path)
