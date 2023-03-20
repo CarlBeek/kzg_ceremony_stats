@@ -51,7 +51,7 @@ def basic_stats(df: pd.DataFrame) -> None:
     print(
         f'''
         Bots stats:
-            {df[df['is_bot'] != ''].shape[0]:>6} ({df[df['is_bot'] != ''].shape[0]/total:>6.2%}) are possibly bots
+            {df[df['is_bot']].shape[0]:>6} ({df[df['is_bot']].shape[0]/total:>6.2%}) are possibly bots
             {df[df['bot_type'] == 'one'].shape[0]:>6} ({df[df['bot_type'] == 'one'].shape[0]/total:>6.2%}) are "ones" bots
             {df[df['bot_type'] == 'no bls sig'].shape[0]:>6} ({df[df['bot_type'] == 'no bls sig'].shape[0]/total:>6.2%}) have no BLS signature
         '''
