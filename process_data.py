@@ -15,6 +15,7 @@ CUT_OFF_BLOCK = 16394156
 
 
 def download_new_transcript(transcript_path: str) -> None:
+    print('Downloading transcript.json...')
     response = requests.get(TRANSCRIPT_URL)
     json_data = json.loads(response.text)
     with open(transcript_path, 'w') as f:

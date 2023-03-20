@@ -1,7 +1,8 @@
 import click
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import plotly.express as px
+
 
 def basic_stats(df: pd.DataFrame) -> None:
     total = df['address'].shape[0]
@@ -31,34 +32,13 @@ def basic_stats(df: pd.DataFrame) -> None:
         '''
     )
 
+
 def plot_ecdf(df: pd.DataFrame, field: str='nonce') -> None:
-    # Sort the `field`` values and compute the empirical CDF
-    sorted_field = np.sort(df[field].dropna())
-    ecdf = np.arange(1, len(sorted_field)+1) / len(sorted_field)
+    fig = px.ecdf(df, x=field, color="bots", marginal="box", log_x=True)
+    fig.show()
 
-    # Plot the ECDF as a step function
-    plt.step(sorted_field, ecdf, where='post')
-
-    # Set the chart title and axis labels
-    plt.title('Empirical CDF of {:}'.format(field))
-    plt.xscale('log')
-    plt.xlabel('log({:})'.format(field))
-    plt.ylabel('Cumulative Distribution')
-    plt.show()
-
-
-def print_zero_nonce(df: pd.DataFrame) -> None:
-    print(df[df['nonce'] == 0])
-
-def violin_plot(df: pd.DataFrame, field: str='nonce') -> None:
-    return
-    # Plot the violin plot
-    plt.violinplot([df[field].dropna().values], showmeans=True, showmedians=True)
-
-    plt.xticks(range(1, len(categories) + 1), categories)
-    plt.xlabel('Category')
-    plt.ylabel('Value')
-    plt.show()
+def output_low_nonces(df: pd.DataFrame) -> None:
+    df[df['nonce'] < 3].to_csv('low_nonce.csv')
 
 @click.command()
 @click.option('--participants_path', default='participants.pkl', show_default=True)
@@ -66,9 +46,9 @@ def violin_plot(df: pd.DataFrame, field: str='nonce') -> None:
 @click.option('--balance_cdf', is_flag=True, default=True, show_default=True)
 def calculate_stats(participants_path: str, nonce_cdf: bool, balance_cdf: bool) -> None:
     participants_df = pd.read_pickle(participants_path)
+    output_low_nonces(participants_df)
     basic_stats(participants_df)
-    print_zero_nonce(participants_df)
-    # if nonce_cdf:
-    #     violin_plot(participants_df, 'nonce')
-    # if balance_cdf:
-    #     plot_ecdf(participants_df, 'balance')
+    if nonce_cdf:
+        plot_ecdf(participants_df, 'nonce')
+    if balance_cdf:
+        plot_ecdf(participants_df, 'balance')

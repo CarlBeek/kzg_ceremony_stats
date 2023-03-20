@@ -1,8 +1,8 @@
 click
 flake8
-matplotlib
 mypy
 numpy
 pandas
+plotly
 tqdm
 web3
