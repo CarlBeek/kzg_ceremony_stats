@@ -2,8 +2,6 @@
 
 A repo for statistics around the KZG ceremony. Primarily around analysing how many bots there are and whether they can be detected.
 
-<iframe width="100%" height="500" src="https://htmlpreview.github.io/?https://raw.githubusercontent.com/CarlBeek/kzg_ceremony_stats/master/plots/nonce_ecdf.html" frameborder="0"></iframe>
-
 ## Setup
 
 ```bash
