@@ -3,8 +3,10 @@ import os
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objs as go
+import plotly.io as pio
 
+from typing import Sequence
 
 G2 = '0x93e02b6052719f607dacd3a088274f65596bd0d09920b61ab5da61bbdc7f5049334cf11213945d57e5ac7d055d042b7e024aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b647ae3d1770bac0326a805bbefd48056c8c121bdb8'
 
@@ -59,9 +61,26 @@ def basic_stats(df: pd.DataFrame) -> None:
 
 
 def plot_ecdf(df: pd.DataFrame, field: str='nonce') -> None:
-    fig = px.ecdf(df, x=field, marginal='box', color='is_bot', log_x=True, ecdfmode='complementary')
-    fig.update_traces(hovertemplate=None)
-    fig.update_layout(title=f'ECDF of {field}', hovermode="x unified")
+    def ecdf(data):
+        data = data.dropna()
+        x = - np.sort(-data)
+        n = len(data)
+        y = np.arange(1, n+1) / n
+        return x, y
+
+    x_bot, y_bot = ecdf(df[df['is_bot']][field])
+    x_notbot, y_notbot = ecdf(df[~df['is_bot']][field])
+
+    fig = go.Figure(go.Scatter(x=x_bot, y=y_bot, mode='lines', name='Bot'))
+    fig.add_trace(go.Scatter(x=x_notbot, y=y_notbot, mode='lines', name='Not Bot'))
+
+    fig.update_layout(
+        hovermode='x unified',
+        title=f'ECDF of {field}',
+        xaxis_title=f'{field}',
+        yaxis_title='ECDF'
+    )
+    fig.update_xaxes(type='log')
 
     if not os.path.exists('plots'):
         os.makedirs('plots')
@@ -72,16 +91,27 @@ def plot_ecdf(df: pd.DataFrame, field: str='nonce') -> None:
 def output_low_nonces(df: pd.DataFrame) -> None:
     df[df['nonce'] < 3].to_csv('low_nonce.csv')
 
+def print_ecdf_nonce_thresholds(df: pd.DataFrame, thresholds: list) -> None:
+    bots_df = df[df['is_bot']]
+    normal_df = df[~df['is_bot']]
+    print('\n        Participants that meet nonce threshold:')
+    print('        [threshold]:    [normal]    [bots]')
+    for threshold in thresholds:
+        print(f'            {threshold:>6}:       {(normal_df[normal_df["nonce"] > threshold].shape[0]/normal_df.shape[0]):>6.2%}    {(bots_df[bots_df["nonce"] > threshold].shape[0]/bots_df.shape[0]):>6.2%}')
+
 @click.command()
 @click.option('--participants_path', default='participants.pkl', show_default=True)
 @click.option('--nonce_cdf', is_flag=True, default=True, show_default=True)
-@click.option('--balance_cdf', is_flag=True, default=False, show_default=True)
-def calculate_stats(participants_path: str, nonce_cdf: bool, balance_cdf: bool) -> None:
+@click.option('--balance_cdf', is_flag=True, default=True, show_default=True)
+@click.option('--nonce_thresholds', '-t', multiple=True, type=click.INT)
+def calculate_stats(participants_path: str, nonce_cdf: bool, balance_cdf: bool, nonce_thresholds: Sequence[int]) -> None:
     participants_df = pd.read_pickle(participants_path)
     participants_df = insert_bot_info(participants_df)
     participants_df = insert_eth_bal(participants_df)
     output_low_nonces(participants_df)
     basic_stats(participants_df)
+    if nonce_thresholds is not None:
+        print_ecdf_nonce_thresholds(participants_df, nonce_thresholds)
     if nonce_cdf:
         plot_ecdf(participants_df, 'nonce')
     if balance_cdf:
