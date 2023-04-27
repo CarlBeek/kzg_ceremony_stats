@@ -23,7 +23,7 @@ def download_new_transcript(transcript_path: str) -> None:
 def maybe_get_address(w3: web3.Web3, pid: str) -> Optional[str]:
     if not pid.startswith('eth'):
         return None
-    return w3.toChecksumAddress(pid[4:])
+    return w3.to_checksum_address(pid[4:])
 
 
 def transcript_to_df(transcript: dict) -> pd.DataFrame:
@@ -123,11 +123,7 @@ def load_new_data(
         participants_df = pd.read_pickle(participants_path)
     
     if fetch_new_transcript:
-        response = requests.get(TRANSCRIPT_URL)
-        json_data = json.loads(response.text)
-        with open(transcript_path, 'w') as f:
-            json.dump(json_data, f)
-
+        download_new_transcript(transcript_path)
 
     with open(transcript_path) as json_file:
         transcript = json.load(json_file)

@@ -27,7 +27,10 @@ def reverse_ens_lookup(w3: web3.Web3, address: str, block_number: int) -> str:
 
         # Call the 'name' function with the specified block number
         ens_name_hash = ens.namehash(reverse_name)
-        ens_name = resolver_contract.functions.name(ens_name_hash).call(block_identifier=block_number)
+        try:
+            ens_name = resolver_contract.functions.name(ens_name_hash).call(block_identifier=block_number)
+        except web3.exceptions.BadFunctionCallOutput:  # Some ENS names are badly formatted and this causes the above function to crash
+            pass
     return ens_name
 
 def update_missing_ens(w3: web3.Web3, participants_df: pd.DataFrame, save_path: str, save_int: int, block: int) -> pd.DataFrame:
