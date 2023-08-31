@@ -99,12 +99,27 @@ def print_ecdf_nonce_thresholds(df: pd.DataFrame, thresholds: list) -> None:
     for threshold in thresholds:
         print(f'            {threshold:>6}:       {(normal_df[normal_df["nonce"] > threshold].shape[0]/normal_df.shape[0]):>6.2%}    {(bots_df[bots_df["nonce"] > threshold].shape[0]/bots_df.shape[0]):>6.2%}')
 
+def output_poap_list(df: pd.DataFrame) -> None:
+    # Filter out GH contributions
+    df = df[df['address'].notna()]
+    # Filter out "ones_bots"
+    df = df[df['bot_type'] != 'one']
+    poap_addresses = df['address']
+    poap_addresses.to_csv('poap_addresses.txt', index=False, header=False)
+
 @click.command()
 @click.option('--participants_path', default='participants.pkl', show_default=True)
 @click.option('--nonce_cdf', is_flag=True, default=True, show_default=True)
 @click.option('--balance_cdf', is_flag=True, default=True, show_default=True)
 @click.option('--nonce_thresholds', '-t', multiple=True, type=click.INT)
-def calculate_stats(participants_path: str, nonce_cdf: bool, balance_cdf: bool, nonce_thresholds: Sequence[int]) -> None:
+@click.option('--generate_poap_list', is_flag=True, default=True, show_default=True)
+def calculate_stats(
+                    participants_path: str,
+                    nonce_cdf: bool,
+                    balance_cdf:bool,
+                    nonce_thresholds: Sequence[int],
+                    generate_poap_list: bool
+                    ) -> None:
     participants_df = pd.read_pickle(participants_path)
     participants_df = insert_bot_info(participants_df)
     participants_df = insert_eth_bal(participants_df)
@@ -116,3 +131,5 @@ def calculate_stats(participants_path: str, nonce_cdf: bool, balance_cdf: bool, 
         plot_ecdf(participants_df, 'nonce')
     if balance_cdf:
         plot_ecdf(participants_df, 'eth_balance')
+    if generate_poap_list:
+        output_poap_list(participants_df)

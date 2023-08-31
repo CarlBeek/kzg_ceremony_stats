@@ -2,3 +2,4 @@ venv
 transcript.json
 *.csv
 *.pkl
+poap_addresses.txt
